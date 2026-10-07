@@ -18,18 +18,12 @@
 ## 🗺️ Mô hình Lab
 
 ```
-┌──────────────────┐        SSH Brute-Force         ┌──────────────────────┐
-│   Attacker (Kali)│  ───────(Hydra)────────────▶   │  Victim              │
-│  192.168.91.129  │                                │  Metasploitable2     │
-└──────────────────┘                                │  192.168.91.141      │
-                                                     └───────────┬──────────┘
-                                                                 │ syslog (UDP/514)
-                                                                 ▼
-                                                     ┌──────────────────────┐
-                                                     │  Wazuh SIEM          │
-                                                     │  192.168.91.140      │
-                                                     │  Detection & Analysis│
-                                                     └──────────────────────┘
+Attacker (Kali)  ──SSH Brute-Force (Hydra)──►  Victim (Metasploitable2)
+192.168.91.129                                  192.168.91.141
+                                                      │ syslog (UDP/514)
+                                                      ▼
+                                             Wazuh SIEM (192.168.91.140)
+                                             Detection & Analysis
 ```
 
 | Vai trò | Máy | IP |
@@ -38,8 +32,9 @@
 | Victim | Metasploitable2 | `192.168.91.141` |
 | SIEM | Ubuntu + Wazuh | `192.168.91.140` |
 
-> 📷 *Ảnh 1 — Dashboard Wazuh sau khi cài đặt thành công.*
-> `![Wazuh Dashboard](images/01-wazuh-dashboard.png)`
+![Wazuh Dashboard](01-wazuh-dashboard.png.jpg)
+
+*Ảnh 1 — Dashboard Wazuh sau khi cài đặt thành công.*
 
 ---
 
@@ -56,7 +51,7 @@ Truy cập dashboard qua `https://192.168.91.140` với tài khoản `admin`.
 ### 2. Thu thập log từ Victim (Agentless – Syslog)
 Metasploitable2 quá cũ để cài Wazuh Agent, nên log được đẩy về SIEM qua **syslog**.
 
-Trên **Victim** — `/etc/syslog.conf`:
+Trên **Victim** — thêm vào cuối file `/etc/syslog.conf`:
 ```
 *.*     @192.168.91.140
 ```
@@ -80,11 +75,8 @@ sudo systemctl restart wazuh-manager
 Kiểm chứng luồng log bằng `tcpdump`:
 ```bash
 sudo tcpdump -i any -n udp port 514
-# IP 192.168.91.141.514 > 192.168.91.140.514: SYSLOG  ✅
+# IP 192.168.91.141.514 > 192.168.91.140.514: SYSLOG
 ```
-
-> 📷 *Ảnh 2 — Dashboard Threat Hunting hiển thị Authentication Failure & phân loại Brute Force (MITRE ATT&CK).*
-> `![Threat Hunting](02-threat-hunting.png.jpg)`
 
 ### 3. Tái hiện tấn công (Attacker – Kali)
 ```bash
@@ -98,18 +90,24 @@ Kết quả:
 ```
 → Attacker **brute-force thành công** và chiếm được tài khoản.
 
-> 📷 *Ảnh 3 — Hydra brute-force thành công, tìm ra mật khẩu.*
-> `![Hydra Attack](03-hydra.png.jpg)`
+![Hydra Attack](03-hydra.png.jpg)
+
+*Ảnh 2 — Hydra brute-force thành công, tìm ra mật khẩu 'msfadmin'.*
 
 ---
 
 ## 🔍 Điều tra (Investigation)
 
 ### Phát hiện trên SIEM
-Sau cuộc tấn công, dashboard ghi nhận: nhiều **Authentication failure** liên tiếp trong cùng một thời điểm (dấu hiệu của tool tự động), tiếp theo là **Authentication success** — mẫu hành vi điển hình của brute-force thành công.
+Sau cuộc tấn công, dashboard ghi nhận nhiều **Authentication failure** liên tiếp trong cùng một thời điểm (dấu hiệu của tool tự động), tiếp theo là **Authentication success** — mẫu hành vi điển hình của brute-force thành công.
 
-> 📷 *Ảnh 4 — Số liệu alert tăng vọt & biểu đồ MITRE ATT&CK (Brute Force → Valid Accounts).*
-> `![Alerts](04-alerts.png.jpg)`
+![Threat Hunting](02-threat-hunting.png.jpg)
+
+*Ảnh 3 — Dashboard Threat Hunting: Authentication Failure/Success & biểu đồ MITRE ATT&CK (Brute Force → Valid Accounts).*
+
+![Alerts](04-alerts.png.jpg)
+
+*Ảnh 4 — Danh sách sự kiện: nhiều lần 'User authentication failure' (rule 2501) từ cùng một nguồn.*
 
 ### Bằng chứng (log gốc)
 ```
@@ -127,8 +125,9 @@ logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.91.129 user=msfadmin
 | Target user | `msfadmin` |
 | Compliance mapping | PCI-DSS 10.2.4/10.2.5 · NIST 800-53 AU.14/AC.7 · HIPAA 164.312.b |
 
-> 📷 *Ảnh 5 — Document Details: full_log, source IP, rule và mapping tuân thủ.*
-> `![Event Detail](05-event-detail.png.jpg)`
+![Event Detail](05-event-detail.png.jpg)
+
+*Ảnh 5 — Document Details: full_log, source IP, rule và mapping tuân thủ.*
 
 ### Bộ câu hỏi điều tra (SOC checklist)
 
