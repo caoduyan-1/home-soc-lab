@@ -84,7 +84,7 @@ sudo tcpdump -i any -n udp port 514
 ```
 
 > 📷 *Ảnh 2 — Dashboard Threat Hunting hiển thị Authentication Failure & phân loại Brute Force (MITRE ATT&CK).*
-> `![Threat Hunting](images/02-threat-hunting.png)`
+> `![Threat Hunting](02-threat-hunting.png.jpg)`
 
 ### 3. Tái hiện tấn công (Attacker – Kali)
 ```bash
@@ -99,7 +99,7 @@ Kết quả:
 → Attacker **brute-force thành công** và chiếm được tài khoản.
 
 > 📷 *Ảnh 3 — Hydra brute-force thành công, tìm ra mật khẩu.*
-> `![Hydra Attack](images/03-hydra.png)`
+> `![Hydra Attack](03-hydra.png.jpg)`
 
 ---
 
@@ -109,7 +109,7 @@ Kết quả:
 Sau cuộc tấn công, dashboard ghi nhận: nhiều **Authentication failure** liên tiếp trong cùng một thời điểm (dấu hiệu của tool tự động), tiếp theo là **Authentication success** — mẫu hành vi điển hình của brute-force thành công.
 
 > 📷 *Ảnh 4 — Số liệu alert tăng vọt & biểu đồ MITRE ATT&CK (Brute Force → Valid Accounts).*
-> `![Alerts](images/04-alerts.png)`
+> `![Alerts](04-alerts.png.jpg)`
 
 ### Bằng chứng (log gốc)
 ```
@@ -128,7 +128,7 @@ logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.91.129 user=msfadmin
 | Compliance mapping | PCI-DSS 10.2.4/10.2.5 · NIST 800-53 AU.14/AC.7 · HIPAA 164.312.b |
 
 > 📷 *Ảnh 5 — Document Details: full_log, source IP, rule và mapping tuân thủ.*
-> `![Event Detail](images/05-event-detail.png)`
+> `![Event Detail](05-event-detail.png.jpg)`
 
 ### Bộ câu hỏi điều tra (SOC checklist)
 
